@@ -42,7 +42,8 @@ public abstract class ServerLevelMixin {
 				.filter(
 						spawnerData ->
 								spawnerData.type != EntityType.CREEPER
-										&& spawnerData.type != EntityType.ENDERMAN
+								&& spawnerData.type != EntityType.ENDERMAN
+								&& spawnerData.type != EntityType.SLIME
 				).toList();
 		weightedRandomList = WeightedRandomList.create(filteredList);
 		return weightedRandomList;
