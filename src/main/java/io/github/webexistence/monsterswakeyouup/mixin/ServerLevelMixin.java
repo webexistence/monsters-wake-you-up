@@ -11,7 +11,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.MobSpawnSettings;
-import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.pathfinder.Path;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,13 +24,15 @@ import java.util.function.BooleanSupplier;
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
-	ServerLevel serverLevel = (ServerLevel) (Object) this;
+    @Unique
+    ServerLevel serverLevel = (ServerLevel) (Object) this;
 
 	@Unique
     private boolean spawnedMob;
 
 
-	private WeightedRandomList<MobSpawnSettings.SpawnerData> getMobCandidateList(BlockPos mobSpawnBlock) {
+	@Unique
+    private WeightedRandomList<MobSpawnSettings.SpawnerData> getMobCandidateList(BlockPos mobSpawnBlock) {
 		MobSpawnSettings mobSpawnBiomeSettings = serverLevel.getBiome(mobSpawnBlock).value().getMobSettings();
 		WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = mobSpawnBiomeSettings.getMobs(MobCategory.MONSTER);
 
@@ -52,7 +54,8 @@ public abstract class ServerLevelMixin {
 	/* Source for help/inspiration -- TheMasterCaver from the Minecraft Forums:
 	 *   https://www.minecraftforum.net/forums/minecraft-java-edition/suggestions/3163484-wake-up-surprise-mechanic-for-sleeping-in-unsafe?comment=18
 	 */
-	private boolean performSleepSpawning() {
+	@Unique
+    private boolean performSleepSpawning() {
 		RandomSource randomSource = serverLevel.getRandom();
 		List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
 		for (ServerPlayer player : serverPlayers) {
@@ -135,10 +138,12 @@ public abstract class ServerLevelMixin {
 				}
 				MobSpawnSettings.SpawnerData spawnerData = optional.get();
 				// based on NaturalSpawner
+				MobSpawnType mobSpawnType = MobSpawnType.TRIGGERED;
 				if (spawnerData.type.canSummon() && SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)) {
 					Entity entity;
 					try {
-						entity = spawnerData.type.create(serverLevel.getLevel());
+						//entity = spawnerData.type.create(serverLevel.getLevel());
+						entity = spawnerData.type.create(serverLevel.getLevel(), null, mobSpawnBlockPos, mobSpawnType, false, false);
 					} catch (Exception exception) {
 						//LOGGER.warn("Failed to create mob", exception);
 						continue;
@@ -148,18 +153,35 @@ public abstract class ServerLevelMixin {
 						continue;
 					}
 
-					entity.moveTo(
-							mobSpawnBlockPos.getX(),
-							mobSpawnBlockPos.getY(),
-							mobSpawnBlockPos.getZ(),
-							randomSource.nextFloat() * 360.0F, 0.0F);
-					if (entity instanceof Mob mob
-							&& mob.checkSpawnRules(serverLevel, MobSpawnType.TRIGGERED)
-							&& mob.checkSpawnObstruction(serverLevel)) {
+					Mob mob = (Mob) entity;
+					System.out.println(mob.toString());
+					mob.setSilent(true); // TODO: is this necessary?
+					mob.setOnGround(true);
+					Path path = mob.getNavigation().createPath(player, maxSpawnDistance);
+
+					if (path == null || !path.canReach()) {
+						return false;
+					}
+					System.out.println(path.toString());
+
+					//entity.moveTo(
+					//		mobSpawnBlockPos.getX(),
+					//		mobSpawnBlockPos.getY(),
+					//		mobSpawnBlockPos.getZ(),
+					//		randomSource.nextFloat() * 360.0F, 0.0F);
+
+					// TODO: *pathfind check* and *block lighting* seem to have no effect; look into this.
+
+					//if (entity instanceof Mob mob
+					//if (mob.checkSpawnRules(serverLevel, mobSpawnType)
+					if (Mob.checkMobSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)
+                            && mob.checkSpawnObstruction(serverLevel)) {
 						SpawnGroupData spawnGroupData = null;
 						spawnGroupData = mob.finalizeSpawn(
 								serverLevel, serverLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
 						);
+						mob.moveTo(player.position());
+						mob.setSilent(false);
 						serverLevel.addFreshEntityWithPassengers(mob);
 						System.out.println("SPAWNING MOB!!!!!");
 						return true;
@@ -171,19 +193,18 @@ public abstract class ServerLevelMixin {
 		return false;
 	}
 
-	private boolean monsterSpawningAllowed() {
+	@Unique
+    private boolean monsterSpawningAllowed() {
 		return this.serverLevel.getDifficulty() != Difficulty.PEACEFUL
-				&& this.serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
+				&& this.serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
+				&& !this.spawnedMob;
 	}
 
-	/* TODO: Insert an entirely new if() conditional that checks if hostile mobs
-	    are allowed (check difficulty?), then runs logic to spawn monsters. */
 	@Inject(
 			method = "tick(Ljava/util/function/BooleanSupplier;)V",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/server/players/SleepStatus;areEnoughDeepSleeping(ILjava/util/List;)Z",
-					shift = At.Shift.AFTER
+					target = "Lnet/minecraft/world/level/GameRules;getBoolean(Lnet/minecraft/world/level/GameRules$Key;)Z"
 			)
 	)
 	private void checkMonsterSpawning(BooleanSupplier booleanSupplier, CallbackInfo ci) {
@@ -208,6 +229,18 @@ public abstract class ServerLevelMixin {
 	}
 
 	// Targets ServerLevel line 345.
+	@Inject(
+			method = "Lnet/minecraft/server/level/ServerLevel;wakeUpAllPlayers()V",
+			at = @At("HEAD"),
+			cancellable = true
+	)
+	private void preventWakeUpAllPlayers(CallbackInfo ci) {
+		if (this.spawnedMob) {
+			ci.cancel();
+		}
+	}
+
+	// Targets ServerLevel line 346.
 	@ModifyExpressionValue(
 			method = "tick(Ljava/util/function/BooleanSupplier;)V",
 			at = @At(
@@ -217,8 +250,17 @@ public abstract class ServerLevelMixin {
 					//target = "Lnet/minecraft/server/level/ServerLevel;isRaining()Z"
 			)
 	)
-	private boolean allowWakeUpAllPlayers(boolean original) {
+	private boolean allowResetWeather(boolean original) {
 		return original && !this.spawnedMob;
 	}
 
+
+	@Inject(
+			method = "tick(Ljava/util/function/BooleanSupplier;)V",
+			at = @At("TAIL")
+	)
+	private void resetFlag(BooleanSupplier booleanSupplier, CallbackInfo ci) {
+		this.spawnedMob = false;
+		//this.spawnedMob = true;
+	}
 }
