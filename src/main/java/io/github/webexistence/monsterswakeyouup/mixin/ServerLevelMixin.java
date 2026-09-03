@@ -56,6 +56,7 @@ public abstract class ServerLevelMixin {
 	 */
 	@Unique
     private boolean performSleepSpawning() {
+		System.out.println("performSleepSpawning() invoked let's goooooo!!");
 		RandomSource randomSource = serverLevel.getRandom();
 		List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
 		for (ServerPlayer player : serverPlayers) {
@@ -113,9 +114,7 @@ public abstract class ServerLevelMixin {
 				//int minY = Math.max(Math.max(0, playerPosY - range), mobPosY - range);
 
 				//System.out.println("#### SPAWN MOB!!!!! ####");
-				//System.out.println("mobPosX, mobPosZ: ");
-				//System.out.println(mobPosX + ", " + mobPosZ);
-				//System.out.println("  mobPosY: " + mobPosY);
+				//System.out.println("mobPosX, mobPosZ: " + mobPosX + ", " + mobPosZ);
 
 				//int chunkSize= 15;
 				//do {
@@ -138,8 +137,11 @@ public abstract class ServerLevelMixin {
 				}
 				MobSpawnSettings.SpawnerData spawnerData = optional.get();
 				// based on NaturalSpawner
-				MobSpawnType mobSpawnType = MobSpawnType.TRIGGERED;
-				if (spawnerData.type.canSummon() && SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)) {
+				MobSpawnType mobSpawnType = MobSpawnType.NATURAL;
+				if (spawnerData.type.canSummon()
+						&& SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
+						//&& Mob.checkMobSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)
+						&& SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)) {
 					Entity entity;
 					try {
 						//entity = spawnerData.type.create(serverLevel.getLevel());
@@ -157,35 +159,27 @@ public abstract class ServerLevelMixin {
 					System.out.println(mob.toString());
 					mob.setSilent(true); // TODO: is this necessary?
 					mob.setOnGround(true);
-					Path path = mob.getNavigation().createPath(player, maxSpawnDistance);
+					// I believe the 0 arg here means the mob must be able to reach the player with a buffer distance of 0 blocks.
+					Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
+					System.out.println(path.getEndNode());
 					if (path == null || !path.canReach()) {
+						System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
 						return false;
 					}
 					System.out.println(path.toString());
 
-					//entity.moveTo(
-					//		mobSpawnBlockPos.getX(),
-					//		mobSpawnBlockPos.getY(),
-					//		mobSpawnBlockPos.getZ(),
-					//		randomSource.nextFloat() * 360.0F, 0.0F);
-
-					// TODO: *pathfind check* and *block lighting* seem to have no effect; look into this.
-
+					// Spawn the mob
 					//if (entity instanceof Mob mob
-					//if (mob.checkSpawnRules(serverLevel, mobSpawnType)
-					if (Mob.checkMobSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)
-                            && mob.checkSpawnObstruction(serverLevel)) {
-						SpawnGroupData spawnGroupData = null;
-						spawnGroupData = mob.finalizeSpawn(
-								serverLevel, serverLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
-						);
-						mob.moveTo(player.position());
-						mob.setSilent(false);
-						serverLevel.addFreshEntityWithPassengers(mob);
-						System.out.println("SPAWNING MOB!!!!!");
-						return true;
-					}
+					SpawnGroupData spawnGroupData = null;
+					spawnGroupData = mob.finalizeSpawn(
+							serverLevel, serverLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
+					);
+					mob.moveTo(player.position());
+					mob.setSilent(false);
+					serverLevel.addFreshEntityWithPassengers(mob);
+					System.out.println("SPAWNING MOB!!!!!");
+					return true;
 				}
 
 			}
@@ -211,6 +205,7 @@ public abstract class ServerLevelMixin {
 		//if (((ServerLevel) (Object) this).getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
 	    if (monsterSpawningAllowed()) {
 			//System.out.println("insert new conditional");
+			// TODO: fix the fact that this invokes every tick despite the boolean checks
 			this.spawnedMob = performSleepSpawning();
 		}
 	}
@@ -225,7 +220,8 @@ public abstract class ServerLevelMixin {
 			)
 	)
 	private boolean allowSkipNight(boolean original) {
-		return original && !this.spawnedMob;
+		//return original && !this.spawnedMob;
+		return original && false;
 	}
 
 	// Targets ServerLevel line 345.
