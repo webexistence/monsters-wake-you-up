@@ -66,32 +66,33 @@ public abstract class ServerLevelMixin {
 			int playerPosX = (int) Math.floor(player.position().x);
 			int playerPosY = (int) Math.floor(player.position().y);
 			int playerPosZ = (int) Math.floor(player.position().z);
-			//LevelChunk playerChunk = serverLevel.getChunk(playerPosX, playerPosZ);
 
 			int numSpawnAttempts = 25;
-			//int numSpawnAttempts = 1000;
-			int lastAttempts = numSpawnAttempts - (numSpawnAttempts / 5);
+			int lastAttempts = 5;
 			// Chooses a random location between 2 and 31 blocks away from player (circular); y is +/- 15 blocks
-			// the last 5 attempts use a reduced range of xz +/- 7 and y +/- 3
+			// lastAttempts: num attempts at the end which use a reduced range for spawn attempts
 			for (int i = 0; i < numSpawnAttempts; i++) {
 
 				int minSpawnDistance = 2;
 				int maxSpawnDistance = 32;
-				int maxSpawnDistanceVertical = 15;
+				int maxSpawnDistanceVertical = 15; // TODO: make this useful
 
 				int spawnX;
 				int spawnZ;
 				int squaredDistance;
 
 				do {
-					if (i < lastAttempts) {
+					if (i < numSpawnAttempts - lastAttempts) {
+						// regular attempts
 						spawnX = randomSource.nextInt(maxSpawnDistance) - randomSource.nextInt(maxSpawnDistance);
 						spawnZ = randomSource.nextInt(maxSpawnDistance) - randomSource.nextInt(maxSpawnDistance);
 					} else {
+						// lastAttempts use reduced range
 						spawnX = randomSource.nextInt(maxSpawnDistance / 2 - 1) - randomSource.nextInt(maxSpawnDistance / 4 - 1);
 						spawnZ = randomSource.nextInt(maxSpawnDistance / 2 - 1) - randomSource.nextInt(maxSpawnDistance / 4 - 1);
 					}
 					squaredDistance = (spawnX * spawnX) + (spawnZ * spawnZ);
+					// squaredDistance is Pythagorean theorem: x^2 + z^2 = distance^2
 				} while (squaredDistance <= minSpawnDistance
 						|| squaredDistance >= (maxSpawnDistance * maxSpawnDistance));
 
@@ -106,19 +107,8 @@ public abstract class ServerLevelMixin {
 				int mobPosY = Math.max(1, Math.min(256, potentialMobPosY));
 				int mobPosZ = playerPosZ + spawnZ;
 
-				//int minY = Math.max(Math.max(0, playerPosY - range), mobPosY - range);
-
-				//System.out.println("#### SPAWN MOB!!!!! ####");
-				//System.out.println("mobPosX, mobPosZ: " + mobPosX + ", " + mobPosZ);
-
-				//int chunkSize= 15;
-				//do {
-				//	if (serverLevel.)
-				//}
-				//Zombie mob = new Zombie(serverLevel);
-				//mob.lookAt(player, 0, 0);
-
 				BlockPos mobSpawnBlockPos = new BlockPos(mobPosX, mobPosY, mobPosZ);
+				//System.out.println(mobSpawnBlockPos);
 				WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = getMobCandidateList(mobSpawnBlockPos);
 
 				// DEBUGGING
