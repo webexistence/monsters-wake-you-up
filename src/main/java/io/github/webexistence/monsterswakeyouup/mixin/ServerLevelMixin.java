@@ -102,12 +102,10 @@ public abstract class ServerLevelMixin {
                     range = maxSpawnDistance / 4;
                 }
                 int mobPosX = playerPosX + spawnX;
-                int potentialMobPosY = playerPosY + serverLevel.random.nextInt(range) - serverLevel.random.nextInt(range);
-                int mobPosY = Math.max(1, Math.min(256, potentialMobPosY));
                 int mobPosZ = playerPosZ + spawnZ;
 
                 // set up initial BlockPos for potential spawn
-                BlockPos mobSpawnBlockPos = new BlockPos(mobPosX, mobPosY, mobPosZ);
+                BlockPos mobSpawnBlockPos = new BlockPos(mobPosX, playerPosY, mobPosZ);
 
                 //System.out.println("INITIAL: " + mobSpawnBlockPos);
 
