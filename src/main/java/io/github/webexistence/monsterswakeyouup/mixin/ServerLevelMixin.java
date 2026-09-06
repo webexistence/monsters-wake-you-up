@@ -36,8 +36,6 @@ public abstract class ServerLevelMixin {
 		MobSpawnSettings mobSpawnBiomeSettings = serverLevel.getBiome(mobSpawnBlock).value().getMobSettings();
 		WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = mobSpawnBiomeSettings.getMobs(MobCategory.MONSTER);
 
-		//weightedRandomList.unwrap().removeIf(spawnerData -> spawnerData.type != EntityType.CREEPER);
-
 		List<MobSpawnSettings.SpawnerData> filteredList = weightedRandomList
 				.unwrap()
 				.stream()
@@ -60,9 +58,6 @@ public abstract class ServerLevelMixin {
 		RandomSource randomSource = serverLevel.getRandom();
 		List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
 		for (ServerPlayer player : serverPlayers) {
-			//System.out.println("Player name: " + player.getName().getString());
-			//System.out.println("    gameMode: " + player.gameMode.getGameModeForPlayer().getName());
-			//System.out.println("    isSleepingLongEnough: " + player.isSleepingLongEnough());
 
 			if (player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) {
 				return false;
@@ -140,11 +135,9 @@ public abstract class ServerLevelMixin {
 				MobSpawnType mobSpawnType = MobSpawnType.NATURAL;
 				if (spawnerData.type.canSummon()
 						&& SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
-						//&& Mob.checkMobSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)
 						&& SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)) {
 					Entity entity;
 					try {
-						//entity = spawnerData.type.create(serverLevel.getLevel());
 						entity = spawnerData.type.create(serverLevel.getLevel(), null, mobSpawnBlockPos, mobSpawnType, false, false);
 					} catch (Exception exception) {
 						//LOGGER.warn("Failed to create mob", exception);
@@ -159,10 +152,9 @@ public abstract class ServerLevelMixin {
 					System.out.println(mob.toString());
 					mob.setSilent(true); // TODO: is this necessary?
 					mob.setOnGround(true);
-					// I believe the 0 arg here means the mob must be able to reach the player with a buffer distance of 0 blocks.
 					Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
-					System.out.println(path.getEndNode());
+					//System.out.println(path.getEndNode());
 					if (path == null || !path.canReach()) {
 						System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
 						return false;
@@ -170,7 +162,6 @@ public abstract class ServerLevelMixin {
 					System.out.println(path.toString());
 
 					// Spawn the mob
-					//if (entity instanceof Mob mob
 					SpawnGroupData spawnGroupData = null;
 					spawnGroupData = mob.finalizeSpawn(
 							serverLevel, serverLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
