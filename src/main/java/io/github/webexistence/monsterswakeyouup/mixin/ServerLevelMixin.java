@@ -28,7 +28,7 @@ public abstract class ServerLevelMixin {
     ServerLevel serverLevel = (ServerLevel) (Object) this;
 
 	@Unique
-    private boolean spawnedMob;
+    private static boolean spawnedMob;
 
 
 	@Unique
@@ -179,6 +179,7 @@ public abstract class ServerLevelMixin {
 					mob.setSilent(false);
 					serverLevel.addFreshEntityWithPassengers(mob);
 					System.out.println("SPAWNING MOB!!!!!");
+					player.stopSleeping();
 					return true;
 				}
 
@@ -191,7 +192,7 @@ public abstract class ServerLevelMixin {
     private boolean monsterSpawningAllowed() {
 		return this.serverLevel.getDifficulty() != Difficulty.PEACEFUL
 				&& this.serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
-				&& !this.spawnedMob;
+				&& !spawnedMob;
 	}
 
 	@Inject(
@@ -206,7 +207,7 @@ public abstract class ServerLevelMixin {
 	    if (monsterSpawningAllowed()) {
 			//System.out.println("insert new conditional");
 			// TODO: fix the fact that this invokes every tick despite the boolean checks
-			this.spawnedMob = performSleepSpawning();
+			spawnedMob = performSleepSpawning();
 		}
 	}
 
@@ -220,8 +221,7 @@ public abstract class ServerLevelMixin {
 			)
 	)
 	private boolean allowSkipNight(boolean original) {
-		//return original && !this.spawnedMob;
-		return original && false;
+		return original && !spawnedMob;
 	}
 
 	// Targets ServerLevel line 345.
@@ -231,7 +231,7 @@ public abstract class ServerLevelMixin {
 			cancellable = true
 	)
 	private void preventWakeUpAllPlayers(CallbackInfo ci) {
-		if (this.spawnedMob) {
+		if (spawnedMob) {
 			ci.cancel();
 		}
 	}
@@ -247,16 +247,15 @@ public abstract class ServerLevelMixin {
 			)
 	)
 	private boolean allowResetWeather(boolean original) {
-		return original && !this.spawnedMob;
+		return original && !spawnedMob;
 	}
 
 
 	@Inject(
 			method = "tick(Ljava/util/function/BooleanSupplier;)V",
-			at = @At("TAIL")
+			at = @At("HEAD")
 	)
 	private void resetFlag(BooleanSupplier booleanSupplier, CallbackInfo ci) {
-		this.spawnedMob = false;
-		//this.spawnedMob = true;
+		spawnedMob = false;
 	}
 }
