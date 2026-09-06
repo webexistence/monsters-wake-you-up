@@ -133,21 +133,17 @@ public abstract class ServerLevelMixin {
 
                 // based on NaturalSpawner
                 if (spawnerData.type.canSummon()) {
+                    // Create entity object, but do not spawn it yet
                     Entity entity;
-                    try {
-                        entity = spawnerData.type.create(serverLevel, null, mobSpawnBlockPos, mobSpawnType, false, false);
-                    } catch (Exception exception) {
-                        //LOGGER.warn("Failed to create mob", exception);
-                        continue;
-                    }
-
+                    entity = spawnerData.type.create(serverLevel);
                     if (entity == null) {
                         continue;
                     }
+                    entity.moveTo(mobSpawnBlockPos.getCenter());
 
+                    // Craete mob object to do pathfinding check
                     Mob mob = (Mob) entity;
                     System.out.println(mob.toString());
-                    mob.setSilent(true); // TODO: is this necessary?
                     mob.setOnGround(true); // necessary for createPath() to return non-null
                     Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
@@ -157,13 +153,12 @@ public abstract class ServerLevelMixin {
                     }
                     System.out.println(path.toString());
 
-                    // Spawn the mob
+                    // Finally, attempt to actually spawn the mob
                     SpawnGroupData spawnGroupData = null;
                     spawnGroupData = mob.finalizeSpawn(
                             serverLevel, serverLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
                     );
                     mob.moveTo(player.position());
-                    mob.setSilent(false);
                     serverLevel.addFreshEntityWithPassengers(mob);
                     System.out.println("SPAWNING MOB!!!!!");
                     player.stopSleeping();
