@@ -96,12 +96,6 @@ public abstract class ServerLevelMixin {
                 } while (squaredDistance <= minSpawnDistance
                         || squaredDistance >= (maxSpawnDistance * maxSpawnDistance));
 
-                int range;
-                if (i < lastAttempts) {
-                    range = maxSpawnDistance / 2;
-                } else {
-                    range = maxSpawnDistance / 4;
-                }
                 int mobPosX = playerPosX + spawnX;
                 int mobPosZ = playerPosZ + spawnZ;
 
