@@ -141,7 +141,7 @@ public abstract class ServerLevelMixin {
                     }
                     entity.moveTo(mobSpawnBlockPos.getCenter());
 
-                    // Craete mob object to do pathfinding check
+                    // Create mob object to do pathfinding check
                     Mob mob = (Mob) entity;
                     System.out.println(mob.toString());
                     mob.setOnGround(true); // necessary for createPath() to return non-null
