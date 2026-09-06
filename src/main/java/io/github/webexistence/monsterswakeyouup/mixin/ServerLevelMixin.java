@@ -55,7 +55,6 @@ public abstract class ServerLevelMixin {
 	@Unique
     private boolean performSleepSpawning() {
 		System.out.println("performSleepSpawning() invoked let's goooooo!!");
-		RandomSource randomSource = serverLevel.getRandom();
 		List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
 		for (ServerPlayer player : serverPlayers) {
 
@@ -84,12 +83,12 @@ public abstract class ServerLevelMixin {
 				do {
 					if (i < numSpawnAttempts - lastAttempts) {
 						// regular attempts
-						spawnX = randomSource.nextInt(maxSpawnDistance) - randomSource.nextInt(maxSpawnDistance);
-						spawnZ = randomSource.nextInt(maxSpawnDistance) - randomSource.nextInt(maxSpawnDistance);
+						spawnX = serverLevel.random.nextInt(maxSpawnDistance) - serverLevel.random.nextInt(maxSpawnDistance);
+						spawnZ = serverLevel.random.nextInt(maxSpawnDistance) - serverLevel.random.nextInt(maxSpawnDistance);
 					} else {
 						// lastAttempts use reduced range
-						spawnX = randomSource.nextInt(maxSpawnDistance / 2 - 1) - randomSource.nextInt(maxSpawnDistance / 4 - 1);
-						spawnZ = randomSource.nextInt(maxSpawnDistance / 2 - 1) - randomSource.nextInt(maxSpawnDistance / 4 - 1);
+						spawnX = serverLevel.random.nextInt(maxSpawnDistance / 2 - 1) - serverLevel.random.nextInt(maxSpawnDistance / 4 - 1);
+						spawnZ = serverLevel.random.nextInt(maxSpawnDistance / 2 - 1) - serverLevel.random.nextInt(maxSpawnDistance / 4 - 1);
 					}
 					squaredDistance = (spawnX * spawnX) + (spawnZ * spawnZ);
 					// squaredDistance is Pythagorean theorem: x^2 + z^2 = distance^2
@@ -103,7 +102,7 @@ public abstract class ServerLevelMixin {
 					range = maxSpawnDistance / 4;
 				}
 				int mobPosX = playerPosX + spawnX;
-				int potentialMobPosY = playerPosY + randomSource.nextInt(range) - randomSource.nextInt(range);
+				int potentialMobPosY = playerPosY + serverLevel.random.nextInt(range) - serverLevel.random.nextInt(range);
 				int mobPosY = Math.max(1, Math.min(256, potentialMobPosY));
 				int mobPosZ = playerPosZ + spawnZ;
 
@@ -114,7 +113,7 @@ public abstract class ServerLevelMixin {
 
 				WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = getMobCandidateList(mobSpawnBlockPos);
 
-				Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(randomSource);
+				Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(serverLevel.random);
 				if (optional.isEmpty()) {
 					continue;
 				}
@@ -128,7 +127,7 @@ public abstract class ServerLevelMixin {
 				for (int y = maxSpawnY; y > minSpawnY; y--) {
 					mobSpawnBlockPos =  new BlockPos(mobPosX, y, mobPosZ);
 					if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
-							&& SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)) {
+							&& SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, serverLevel.random)) {
 						foundValidPosY = true;
 						break;
 					}
