@@ -75,7 +75,7 @@ public abstract class ServerLevelMixin {
 
 				int minSpawnDistance = 2;
 				int maxSpawnDistance = 32;
-				int maxSpawnDistanceVertical = 15; // TODO: make this useful
+				int maxSpawnDistanceVertical = 15;
 
 				int spawnX;
 				int spawnZ;
@@ -107,25 +107,40 @@ public abstract class ServerLevelMixin {
 				int mobPosY = Math.max(1, Math.min(256, potentialMobPosY));
 				int mobPosZ = playerPosZ + spawnZ;
 
+				// set up initial BlockPos for potential spawn
 				BlockPos mobSpawnBlockPos = new BlockPos(mobPosX, mobPosY, mobPosZ);
-				//System.out.println(mobSpawnBlockPos);
-				WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = getMobCandidateList(mobSpawnBlockPos);
 
-				// DEBUGGING
-				//for (MobSpawnSettings.SpawnerData spawnerData : weightedRandomList.unwrap()) {
-				//	System.out.println(spawnerData.type);
-				//}
+				//System.out.println("INITIAL: " + mobSpawnBlockPos);
+
+				WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = getMobCandidateList(mobSpawnBlockPos);
 
 				Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(randomSource);
 				if (optional.isEmpty()) {
-					return false;
+					continue;
 				}
 				MobSpawnSettings.SpawnerData spawnerData = optional.get();
-				// based on NaturalSpawner
 				MobSpawnType mobSpawnType = MobSpawnType.NATURAL;
-				if (spawnerData.type.canSummon()
-						&& SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
-						&& SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)) {
+
+				// scan for valid Y coordinate; change BlockPos if one is found
+				int maxSpawnY = playerPosY + maxSpawnDistanceVertical;
+				int minSpawnY = playerPosY - maxSpawnDistanceVertical;
+				boolean foundValidPosY = false;
+				for (int y = maxSpawnY; y > minSpawnY; y--) {
+					mobSpawnBlockPos =  new BlockPos(mobPosX, y, mobPosZ);
+					if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
+							&& SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, randomSource)) {
+						foundValidPosY = true;
+						break;
+					}
+				}
+				//System.out.println("NEW: " + mobSpawnBlockPos);
+				if (!foundValidPosY) {
+					continue;
+				}
+				System.out.println("Attempting to spawn mob...");
+
+				// based on NaturalSpawner
+				if (spawnerData.type.canSummon()) {
 					Entity entity;
 					try {
 						entity = spawnerData.type.create(serverLevel.getLevel(), null, mobSpawnBlockPos, mobSpawnType, false, false);
@@ -141,13 +156,13 @@ public abstract class ServerLevelMixin {
 					Mob mob = (Mob) entity;
 					System.out.println(mob.toString());
 					mob.setSilent(true); // TODO: is this necessary?
-					mob.setOnGround(true);
+					mob.setOnGround(true); // necessary for createPath() to return non-null
 					Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
 					//System.out.println(path.getEndNode());
 					if (path == null || !path.canReach()) {
 						System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
-						return false;
+						continue;
 					}
 					System.out.println(path.toString());
 
