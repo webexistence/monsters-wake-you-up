@@ -25,11 +25,17 @@ import java.util.function.BooleanSupplier;
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin {
     @Unique
+    private static final int minSpawnDistance = 2;
+    @Unique
+    private static final int maxSpawnDistance = 32;
+    @Unique
+    private static final int maxSpawnDistanceVertical = 15;
+
+    @Unique
     ServerLevel serverLevel = (ServerLevel) (Object) this;
 
     @Unique
     private static boolean spawnedMob;
-
 
     @Unique
     private WeightedRandomList<MobSpawnSettings.SpawnerData> getMobCandidateList(BlockPos mobSpawnBlock) {
@@ -71,10 +77,6 @@ public abstract class ServerLevelMixin {
             // Chooses a random location between 2 and 31 blocks away from player (circular); y is +/- 15 blocks
             // lastAttempts: num attempts at the end which use a reduced range for spawn attempts
             for (int i = 0; i < numSpawnAttempts; i++) {
-
-                int minSpawnDistance = 2;
-                int maxSpawnDistance = 32;
-                int maxSpawnDistanceVertical = 15;
 
                 int spawnX;
                 int spawnZ;
