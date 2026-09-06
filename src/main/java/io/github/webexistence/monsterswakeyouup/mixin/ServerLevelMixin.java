@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.RandomSource;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.*;
@@ -142,7 +141,7 @@ public abstract class ServerLevelMixin {
                 if (spawnerData.type.canSummon()) {
                     Entity entity;
                     try {
-                        entity = spawnerData.type.create(serverLevel.getLevel(), null, mobSpawnBlockPos, mobSpawnType, false, false);
+                        entity = spawnerData.type.create(serverLevel, null, mobSpawnBlockPos, mobSpawnType, false, false);
                     } catch (Exception exception) {
                         //LOGGER.warn("Failed to create mob", exception);
                         continue;
@@ -158,7 +157,6 @@ public abstract class ServerLevelMixin {
                     mob.setOnGround(true); // necessary for createPath() to return non-null
                     Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
-                    //System.out.println(path.getEndNode());
                     if (path == null || !path.canReach()) {
                         System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
                         continue;
