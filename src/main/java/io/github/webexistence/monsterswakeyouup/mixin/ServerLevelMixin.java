@@ -1,6 +1,7 @@
 package io.github.webexistence.monsterswakeyouup.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import io.github.webexistence.monsterswakeyouup.MonstersWakeYouUp;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.pathfinder.Path;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,6 +35,9 @@ public abstract class ServerLevelMixin {
 
     @Unique
     ServerLevel serverLevel = (ServerLevel) (Object) this;
+
+    @Unique
+    private static final Logger LOGGER = MonstersWakeYouUp.LOGGER;
 
     @Unique
     private static boolean spawnedMob;
@@ -67,6 +72,7 @@ public abstract class ServerLevelMixin {
      */
     @Unique
     private boolean performSleepSpawning() {
+        LOGGER.debug("performSleepSpawning() invoked.");
         List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
         for (ServerPlayer player : serverPlayers) {
 
@@ -109,6 +115,8 @@ public abstract class ServerLevelMixin {
                 // set up initial BlockPos for potential spawn
                 BlockPos mobSpawnBlockPos = new BlockPos(mobPosX, playerPosY, mobPosZ);
 
+                LOGGER.debug("Initial mobSpawnBlockPos: " + mobSpawnBlockPos);
+
                 MobSpawnSettings.SpawnerData spawnerData = getRandomMobSpawnerData(mobSpawnBlockPos);
                 if (spawnerData == null) {
                     continue;
@@ -128,9 +136,11 @@ public abstract class ServerLevelMixin {
                         break;
                     }
                 }
+                LOGGER.debug("Final mobSpawnBlockPos: " + mobSpawnBlockPos);
                 if (!foundValidPosY) {
                     continue;
                 }
+                LOGGER.debug("Attempting to spawn mob...");
 
                 // based on NaturalSpawner
                 if (spawnerData.type.canSummon()) {
@@ -148,9 +158,10 @@ public abstract class ServerLevelMixin {
                     Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
                     if (path == null || !path.canReach()) {
-                        //System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
+                        LOGGER.info("Mob ({}) could not pathfind to player {}. Cancelling spawn.", mob.getName().getString(), player.getName().getString());
                         continue;
                     }
+                    LOGGER.debug("Path generated: {}", path);
 
                     // Finally, attempt to actually spawn the mob
                     SpawnGroupData spawnGroupData = null;
@@ -159,7 +170,7 @@ public abstract class ServerLevelMixin {
                     );
                     mob.moveTo(player.position());
                     serverLevel.addFreshEntityWithPassengers(mob);
-                    //System.out.println("SPAWNING MOB!!!!!");
+                    LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName());
                     player.stopSleeping();
                     return true;
                 }
