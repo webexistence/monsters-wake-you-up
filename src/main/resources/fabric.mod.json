@@ -2,8 +2,8 @@
 	"schemaVersion": 1,
 	"id": "monsters-wake-you-up",
 	"version": "${version}",
-	"name": "monsters-wake-you-up",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Monsters Wake You Up",
+	"description": "Monsters can interrupt your sleep.",
 	"authors": [
 		"Me!"
 	],
