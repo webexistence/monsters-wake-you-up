@@ -176,6 +176,7 @@ public abstract class ServerLevelMixin {
                     LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName().getString());
                     player.stopSleeping();
                     player.displayClientMessage(Player.BedSleepingProblem.NOT_SAFE.getMessage(), true);
+                    mob.setTarget(player); // enables the mob to immediately strike
                     return true;
                 }
 
