@@ -17,17 +17,10 @@
 	"entrypoints": {
 		"main": [
 			"io.github.webexistence.monsterswakeyouup.MonstersWakeYouUp"
-		],
-		"client": [
-			"io.github.webexistence.monsterswakeyouup.client.MonstersWakeYouUpClient"
 		]
 	},
 	"mixins": [
-		"monsters-wake-you-up.mixins.json",
-		{
-			"config": "monsters-wake-you-up.client.mixins.json",
-			"environment": "client"
-		}
+		"monsters-wake-you-up.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.3",
