@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.random.WeightedRandomList;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.MobSpawnSettings;
@@ -174,6 +175,7 @@ public abstract class ServerLevelMixin {
                     getServerLevel().addFreshEntityWithPassengers(mob);
                     LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName().getString());
                     player.stopSleeping();
+                    player.displayClientMessage(Player.BedSleepingProblem.NOT_SAFE.getMessage(), true);
                     return true;
                 }
 
