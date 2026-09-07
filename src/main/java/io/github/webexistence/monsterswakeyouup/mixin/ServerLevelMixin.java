@@ -182,8 +182,8 @@ public abstract class ServerLevelMixin {
 
     @Unique
     private boolean monsterSpawningAllowed() {
-        return this.serverLevel.getDifficulty() != Difficulty.PEACEFUL
-                && this.serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
+        return serverLevel.getDifficulty() != Difficulty.PEACEFUL
+                && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
                 && !spawnedMob;
     }
 
