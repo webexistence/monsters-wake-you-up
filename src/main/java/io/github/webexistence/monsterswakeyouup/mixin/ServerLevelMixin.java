@@ -67,7 +67,6 @@ public abstract class ServerLevelMixin {
      */
     @Unique
     private boolean performSleepSpawning() {
-        System.out.println("performSleepSpawning() invoked let's goooooo!!");
         List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
         for (ServerPlayer player : serverPlayers) {
 
@@ -81,7 +80,7 @@ public abstract class ServerLevelMixin {
 
             int numSpawnAttempts = 25;
             int lastAttempts = 5;
-            // Chooses a random location between 2 and 31 blocks away from player (circular); y is +/- 15 blocks
+            // Chooses a random location between min and max distance (config) blocks away from player (circular).
             // lastAttempts: num attempts at the end which use a reduced range for spawn attempts
             for (int i = 0; i < numSpawnAttempts; i++) {
 
@@ -110,8 +109,6 @@ public abstract class ServerLevelMixin {
                 // set up initial BlockPos for potential spawn
                 BlockPos mobSpawnBlockPos = new BlockPos(mobPosX, playerPosY, mobPosZ);
 
-                //System.out.println("INITIAL: " + mobSpawnBlockPos);
-
                 MobSpawnSettings.SpawnerData spawnerData = getRandomMobSpawnerData(mobSpawnBlockPos);
                 if (spawnerData == null) {
                     continue;
@@ -131,11 +128,9 @@ public abstract class ServerLevelMixin {
                         break;
                     }
                 }
-                //System.out.println("NEW: " + mobSpawnBlockPos);
                 if (!foundValidPosY) {
                     continue;
                 }
-                System.out.println("Attempting to spawn mob...");
 
                 // based on NaturalSpawner
                 if (spawnerData.type.canSummon()) {
@@ -149,15 +144,13 @@ public abstract class ServerLevelMixin {
 
                     // Create mob object to do pathfinding check
                     Mob mob = (Mob) entity;
-                    System.out.println(mob.toString());
                     mob.setOnGround(true); // necessary for createPath() to return non-null
                     Path path = mob.getNavigation().createPath(player.blockPosition(), 1, maxSpawnDistance);
 
                     if (path == null || !path.canReach()) {
-                        System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
+                        //System.out.println("path: Mob could not reach player " + player.getName().getString()+ ". Cancelling spawn.");
                         continue;
                     }
-                    System.out.println(path.toString());
 
                     // Finally, attempt to actually spawn the mob
                     SpawnGroupData spawnGroupData = null;
@@ -166,7 +159,7 @@ public abstract class ServerLevelMixin {
                     );
                     mob.moveTo(player.position());
                     serverLevel.addFreshEntityWithPassengers(mob);
-                    System.out.println("SPAWNING MOB!!!!!");
+                    //System.out.println("SPAWNING MOB!!!!!");
                     player.stopSleeping();
                     return true;
                 }
@@ -191,10 +184,7 @@ public abstract class ServerLevelMixin {
             )
     )
     private void checkMonsterSpawning(BooleanSupplier booleanSupplier, CallbackInfo ci) {
-        //if (((ServerLevel) (Object) this).getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
         if (monsterSpawningAllowed()) {
-            //System.out.println("insert new conditional");
-            // TODO: fix the fact that this invokes every tick despite the boolean checks
             spawnedMob = performSleepSpawning();
         }
     }
@@ -231,7 +221,6 @@ public abstract class ServerLevelMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/level/GameRules;getBoolean(Lnet/minecraft/world/level/GameRules$Key;)Z",
                     ordinal = 1
-                    //target = "Lnet/minecraft/server/level/ServerLevel;isRaining()Z"
             )
     )
     private boolean allowResetWeather(boolean original) {
