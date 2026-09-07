@@ -8,8 +8,8 @@
 		"DMTR"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://modrinth.com/mod/monsters-wake-you-up",
+		"sources": "https://github.com/webexistence/monsters-wake-you-up"
 	},
 	"license": "MIT",
 	"icon": "assets/monsters-wake-you-up/icon.png",
