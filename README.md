@@ -1,10 +1,10 @@
 # Monsters Wake You Up
 
-Simply re-implements that old Beta feature where monsters can interrupt players' sleep if they are sleeping in an unsafe are.
+Re-implements that old Beta feature where monsters can interrupt players' sleep if they are sleeping in an unsafe are.
 
 ## Implementation
 
-The implementation is similar to how it was before it was removed in Minecraft 1.0.0. It simulates spawning of up to 25 mobs near the player when they sleep; if one is able to successfully pathfind to the player, their sleep will be interrupted, and they will wake up to a deadly surprise.
+The implementation is similar to vanilla before it was removed in version 1.0.0. It simulates spawning of up to 25 mobs near the player when they sleep; if one is able to successfully pathfind to the player, their sleep will be interrupted, and they will wake up to a deadly surprise.
 
 Potential mob spawns include whatever can naturally spawn in the area around the player, with some exceptions (no Endermen, Creepers, or Slimes). Witches can spawn.
 
