@@ -5,7 +5,8 @@ import io.github.webexistence.monsterswakeyouup.MonstersWakeYouUp;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.random.WeightedRandomList;
+import net.minecraft.util.random.Weighted;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -49,18 +50,20 @@ public abstract class ServerLevelMixin {
     @Nullable
     private MobSpawnSettings.SpawnerData getRandomMobSpawnerData(BlockPos mobSpawnBlock) {
         MobSpawnSettings mobSpawnBiomeSettings = getServerLevel().getBiome(mobSpawnBlock).value().getMobSettings();
-        WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = mobSpawnBiomeSettings.getMobs(MobCategory.MONSTER);
+        WeightedList<MobSpawnSettings.SpawnerData> weightedRandomList = mobSpawnBiomeSettings.getMobs(MobCategory.MONSTER);
 
-        List<MobSpawnSettings.SpawnerData> filteredList = weightedRandomList
+        List<Weighted<MobSpawnSettings.SpawnerData>> filteredList = weightedRandomList
                 .unwrap()
                 .stream()
                 .filter(
-                        spawnerData ->
-                                spawnerData.type != EntityType.CREEPER
-                                        && spawnerData.type != EntityType.ENDERMAN
-                                        && spawnerData.type != EntityType.SLIME
+                        weightedSpawnerData -> {
+                            MobSpawnSettings.SpawnerData spawnerData = weightedSpawnerData.value();
+                            return spawnerData.type() != EntityType.CREEPER
+                                    && spawnerData.type() != EntityType.ENDERMAN
+                                    && spawnerData.type() != EntityType.SLIME;
+                        }
                 ).toList();
-        weightedRandomList = WeightedRandomList.create(filteredList);
+        weightedRandomList = WeightedList.of(filteredList);
 
         Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(getServerLevel().random);
         if (optional.isEmpty()) {
@@ -124,7 +127,7 @@ public abstract class ServerLevelMixin {
                 if (spawnerData == null) {
                     continue;
                 }
-                MobSpawnType mobSpawnType = MobSpawnType.NATURAL;
+                EntitySpawnReason mobSpawnType = EntitySpawnReason.NATURAL;
 
                 // scan for valid Y coordinate; change BlockPos if one is found
                 int maxSpawnY = playerPosY + MAX_SPAWN_DISTANCE_VERTICAL;
@@ -133,8 +136,8 @@ public abstract class ServerLevelMixin {
                 for (int y = maxSpawnY; y > minSpawnY; y--) {
                     mobSpawnBlockPos =  new BlockPos(mobPosX, y, mobPosZ);
                     // TODO: Drowned seem to always fail the checkSpawnRules() check. Would like to be fixed.
-                    if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, getServerLevel(), mobSpawnBlockPos)
-                            && SpawnPlacements.checkSpawnRules(spawnerData.type, getServerLevel(), mobSpawnType, mobSpawnBlockPos, getServerLevel().random)) {
+                    if (SpawnPlacements.isSpawnPositionOk(spawnerData.type(), getServerLevel(), mobSpawnBlockPos)
+                            && SpawnPlacements.checkSpawnRules(spawnerData.type(), getServerLevel(), mobSpawnType, mobSpawnBlockPos, getServerLevel().random)) {
                         foundValidPosY = true;
                         break;
                     }
@@ -146,14 +149,14 @@ public abstract class ServerLevelMixin {
                 LOGGER.debug("Attempting to spawn mob...");
 
                 // based on NaturalSpawner
-                if (spawnerData.type.canSummon()) {
+                if (spawnerData.type().canSummon()) {
                     // Create entity object, but do not spawn it yet
                     Entity entity;
-                    entity = spawnerData.type.create(getServerLevel());
+                    entity = spawnerData.type().create(getServerLevel(), mobSpawnType);
                     if (entity == null) {
                         continue;
                     }
-                    entity.moveTo(mobSpawnBlockPos.getCenter());
+                    entity.snapTo(mobSpawnBlockPos.getCenter());
 
                     // Create mob object to do pathfinding check
                     Mob mob = (Mob) entity;
@@ -169,9 +172,9 @@ public abstract class ServerLevelMixin {
                     // Finally, attempt to actually spawn the mob
                     SpawnGroupData spawnGroupData = null;
                     spawnGroupData = mob.finalizeSpawn(
-                            getServerLevel(), getServerLevel().getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
+                            getServerLevel(), getServerLevel().getCurrentDifficultyAt(mob.blockPosition()), EntitySpawnReason.CHUNK_GENERATION, spawnGroupData
                     );
-                    mob.moveTo(player.position());
+                    mob.snapTo(player.position());
                     getServerLevel().addFreshEntityWithPassengers(mob);
                     LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName().getString());
                     player.stopSleeping();
