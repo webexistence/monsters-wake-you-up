@@ -34,18 +34,20 @@ public abstract class ServerLevelMixin {
     private static final int MAX_SPAWN_DISTANCE_VERTICAL = 15;
 
     @Unique
-    ServerLevel serverLevel = (ServerLevel) (Object) this;
-
-    @Unique
     private static final Logger LOGGER = MonstersWakeYouUp.LOGGER;
 
     @Unique
     private static boolean spawnedMob;
 
     @Unique
+    private ServerLevel getServerLevel() {
+        return (ServerLevel) (Object) this;
+    }
+
+    @Unique
     @Nullable
     private MobSpawnSettings.SpawnerData getRandomMobSpawnerData(BlockPos mobSpawnBlock) {
-        MobSpawnSettings mobSpawnBiomeSettings = serverLevel.getBiome(mobSpawnBlock).value().getMobSettings();
+        MobSpawnSettings mobSpawnBiomeSettings = getServerLevel().getBiome(mobSpawnBlock).value().getMobSettings();
         WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = mobSpawnBiomeSettings.getMobs(MobCategory.MONSTER);
 
         List<MobSpawnSettings.SpawnerData> filteredList = weightedRandomList
@@ -59,7 +61,7 @@ public abstract class ServerLevelMixin {
                 ).toList();
         weightedRandomList = WeightedRandomList.create(filteredList);
 
-        Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(serverLevel.random);
+        Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(getServerLevel().random);
         if (optional.isEmpty()) {
             return null;
         }
@@ -73,7 +75,7 @@ public abstract class ServerLevelMixin {
     @Unique
     private boolean performSleepSpawning() {
         LOGGER.debug("performSleepSpawning() invoked.");
-        List<ServerPlayer> serverPlayers = serverLevel.getServer().getPlayerList().getPlayers();
+        List<ServerPlayer> serverPlayers = getServerLevel().getServer().getPlayerList().getPlayers();
         for (ServerPlayer player : serverPlayers) {
 
             if (player.gameMode.getGameModeForPlayer() == GameType.CREATIVE) {
@@ -97,12 +99,12 @@ public abstract class ServerLevelMixin {
                 do {
                     if (i < numSpawnAttempts - lastAttempts) {
                         // regular attempts
-                        spawnX = serverLevel.random.nextInt(MAX_SPAWN_DISTANCE) - serverLevel.random.nextInt(MAX_SPAWN_DISTANCE);
-                        spawnZ = serverLevel.random.nextInt(MAX_SPAWN_DISTANCE) - serverLevel.random.nextInt(MAX_SPAWN_DISTANCE);
+                        spawnX = getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE) - getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE);
+                        spawnZ = getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE) - getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE);
                     } else {
                         // lastAttempts use reduced range
-                        spawnX = serverLevel.random.nextInt(MAX_SPAWN_DISTANCE / 2 - 1) - serverLevel.random.nextInt(MAX_SPAWN_DISTANCE / 4 - 1);
-                        spawnZ = serverLevel.random.nextInt(MAX_SPAWN_DISTANCE / 2 - 1) - serverLevel.random.nextInt(MAX_SPAWN_DISTANCE / 4 - 1);
+                        spawnX = getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE / 2 - 1) - getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE / 4 - 1);
+                        spawnZ = getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE / 2 - 1) - getServerLevel().random.nextInt(MAX_SPAWN_DISTANCE / 4 - 1);
                     }
                     squaredDistance = (spawnX * spawnX) + (spawnZ * spawnZ);
                     // squaredDistance is Pythagorean theorem: x^2 + z^2 = distance^2
@@ -130,8 +132,8 @@ public abstract class ServerLevelMixin {
                 for (int y = maxSpawnY; y > minSpawnY; y--) {
                     mobSpawnBlockPos =  new BlockPos(mobPosX, y, mobPosZ);
                     // TODO: Drowned seem to always fail the checkSpawnRules() check. Would like to be fixed.
-                    if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
-                            && SpawnPlacements.checkSpawnRules(spawnerData.type, serverLevel, mobSpawnType, mobSpawnBlockPos, serverLevel.random)) {
+                    if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, getServerLevel(), mobSpawnBlockPos)
+                            && SpawnPlacements.checkSpawnRules(spawnerData.type, getServerLevel(), mobSpawnType, mobSpawnBlockPos, getServerLevel().random)) {
                         foundValidPosY = true;
                         break;
                     }
@@ -146,7 +148,7 @@ public abstract class ServerLevelMixin {
                 if (spawnerData.type.canSummon()) {
                     // Create entity object, but do not spawn it yet
                     Entity entity;
-                    entity = spawnerData.type.create(serverLevel);
+                    entity = spawnerData.type.create(getServerLevel());
                     if (entity == null) {
                         continue;
                     }
@@ -166,10 +168,10 @@ public abstract class ServerLevelMixin {
                     // Finally, attempt to actually spawn the mob
                     SpawnGroupData spawnGroupData = null;
                     spawnGroupData = mob.finalizeSpawn(
-                            serverLevel, serverLevel.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
+                            getServerLevel(), getServerLevel().getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.CHUNK_GENERATION, spawnGroupData
                     );
                     mob.moveTo(player.position());
-                    serverLevel.addFreshEntityWithPassengers(mob);
+                    getServerLevel().addFreshEntityWithPassengers(mob);
                     LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName());
                     player.stopSleeping();
                     return true;
@@ -182,8 +184,8 @@ public abstract class ServerLevelMixin {
 
     @Unique
     private boolean monsterSpawningAllowed() {
-        return serverLevel.getDifficulty() != Difficulty.PEACEFUL
-                && serverLevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
+        return getServerLevel().getDifficulty() != Difficulty.PEACEFUL
+                && getServerLevel().getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
                 && !spawnedMob;
     }
 
