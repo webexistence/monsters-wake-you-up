@@ -124,6 +124,7 @@ public abstract class ServerLevelMixin {
                 boolean foundValidPosY = false;
                 for (int y = maxSpawnY; y > minSpawnY; y--) {
                     mobSpawnBlockPos =  new BlockPos(mobPosX, y, mobPosZ);
+                    // TODO: Drowned seem to always fail the checkSpawnRules() check. Would like to be fixed.
                     if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
                             && SpawnPlacements.checkSpawnRules(spawnerData.type, serverLevel, mobSpawnType, mobSpawnBlockPos, serverLevel.random)) {
                         foundValidPosY = true;
