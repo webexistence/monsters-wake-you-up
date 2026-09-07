@@ -120,7 +120,7 @@ public abstract class ServerLevelMixin {
                 for (int y = maxSpawnY; y > minSpawnY; y--) {
                     mobSpawnBlockPos =  new BlockPos(mobPosX, y, mobPosZ);
                     if (SpawnPlacements.isSpawnPositionOk(spawnerData.type, serverLevel, mobSpawnBlockPos)
-                            && SpawnPlacements.checkSpawnRules(EntityType.ZOMBIE, serverLevel, mobSpawnType, mobSpawnBlockPos, serverLevel.random)) {
+                            && SpawnPlacements.checkSpawnRules(spawnerData.type, serverLevel, mobSpawnType, mobSpawnBlockPos, serverLevel.random)) {
                         foundValidPosY = true;
                         break;
                     }
