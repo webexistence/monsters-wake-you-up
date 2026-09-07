@@ -160,7 +160,7 @@ public abstract class ServerLevelMixin {
                     Path path = mob.getNavigation().createPath(player.blockPosition(), 1, MAX_SPAWN_DISTANCE);
 
                     if (path == null || !path.canReach()) {
-                        LOGGER.info("Mob ({}) could not pathfind to player {}. Cancelling spawn.", mob.getName().getString(), player.getName().getString());
+                        LOGGER.debug("Mob ({}) could not pathfind to player {}. Cancelling spawn.", mob.getName().getString(), player.getName().getString());
                         continue;
                     }
                     LOGGER.debug("Path generated: {}", path);
