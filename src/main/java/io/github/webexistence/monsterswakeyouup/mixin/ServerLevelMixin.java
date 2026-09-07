@@ -11,6 +11,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.pathfinder.Path;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -37,7 +38,8 @@ public abstract class ServerLevelMixin {
     private static boolean spawnedMob;
 
     @Unique
-    private WeightedRandomList<MobSpawnSettings.SpawnerData> getMobCandidateList(BlockPos mobSpawnBlock) {
+    @Nullable
+    private MobSpawnSettings.SpawnerData getRandomMobSpawnerData(BlockPos mobSpawnBlock) {
         MobSpawnSettings mobSpawnBiomeSettings = serverLevel.getBiome(mobSpawnBlock).value().getMobSettings();
         WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = mobSpawnBiomeSettings.getMobs(MobCategory.MONSTER);
 
@@ -51,7 +53,13 @@ public abstract class ServerLevelMixin {
                                         && spawnerData.type != EntityType.SLIME
                 ).toList();
         weightedRandomList = WeightedRandomList.create(filteredList);
-        return weightedRandomList;
+
+        Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(serverLevel.random);
+        if (optional.isEmpty()) {
+            return null;
+        }
+        MobSpawnSettings.SpawnerData spawnerData = optional.get();
+        return spawnerData;
     }
 
     /* Source for help/inspiration -- TheMasterCaver from the Minecraft Forums:
@@ -104,13 +112,10 @@ public abstract class ServerLevelMixin {
 
                 //System.out.println("INITIAL: " + mobSpawnBlockPos);
 
-                WeightedRandomList<MobSpawnSettings.SpawnerData> weightedRandomList = getMobCandidateList(mobSpawnBlockPos);
-
-                Optional<MobSpawnSettings.SpawnerData> optional = weightedRandomList.getRandom(serverLevel.random);
-                if (optional.isEmpty()) {
+                MobSpawnSettings.SpawnerData spawnerData = getRandomMobSpawnerData(mobSpawnBlockPos);
+                if (spawnerData == null) {
                     continue;
                 }
-                MobSpawnSettings.SpawnerData spawnerData = optional.get();
                 MobSpawnType mobSpawnType = MobSpawnType.NATURAL;
 
                 // scan for valid Y coordinate; change BlockPos if one is found
