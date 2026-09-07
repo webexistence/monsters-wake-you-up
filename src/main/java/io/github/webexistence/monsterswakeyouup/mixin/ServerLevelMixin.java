@@ -172,7 +172,7 @@ public abstract class ServerLevelMixin {
                     );
                     mob.moveTo(player.position());
                     getServerLevel().addFreshEntityWithPassengers(mob);
-                    LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName());
+                    LOGGER.info("Spawning mob ({}) on player {}.", mob.getName().getString(), player.getName().getString());
                     player.stopSleeping();
                     return true;
                 }
