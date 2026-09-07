@@ -5,13 +5,13 @@
 	"name": "Monsters Wake You Up",
 	"description": "Monsters can interrupt your sleep.",
 	"authors": [
-		"Me!"
+		"DMTR"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/monsters-wake-you-up/icon.png",
 	"environment": "*",
 	"entrypoints": {
