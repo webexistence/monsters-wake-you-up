@@ -172,7 +172,7 @@ public abstract class ServerLevelMixin {
                     // Finally, attempt to actually spawn the mob
                     SpawnGroupData spawnGroupData = null;
                     spawnGroupData = mob.finalizeSpawn(
-                            getServerLevel(), getServerLevel().getCurrentDifficultyAt(mob.blockPosition()), EntitySpawnReason.CHUNK_GENERATION, spawnGroupData
+                            getServerLevel(), getServerLevel().getCurrentDifficultyAt(mob.blockPosition()), mobSpawnType, spawnGroupData
                     );
                     mob.snapTo(player.position());
                     getServerLevel().addFreshEntityWithPassengers(mob);
