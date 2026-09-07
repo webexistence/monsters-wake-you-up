@@ -1,9 +1,11 @@
-# monsters-wake-you-up
+# Monsters Wake You Up
 
-## Setup
+Simply re-implements that old Beta feature where monsters can interrupt players' sleep if they are sleeping in an unsafe are.
 
-For setup instructions, please see the [Fabric Documentation page](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up) related to the IDE that you are using.
+## Implementation
 
-## License
+The implementation is similar to how it was before it was removed in Minecraft 1.0.0. It simulates spawning of up to 25 mobs near the player when they sleep; if one is able to successfully pathfind to the player, their sleep will be interrupted, and they will wake up to a deadly surprise.
 
-This template is available under the MIT license. Feel free to learn from it and incorporate it in your own projects.
+Potential mob spawns include whatever can naturally spawn in the area around the player, with some exceptions (no Endermen, Creepers, or Slimes). Witches can spawn.
+
+This could be somewhat buggy, but it seems fairly robust in my testing so far. The current implementation seems to treat double-doors and beds in house corners just fine. Those were common issues with the old implementation from Minecraft Beta.
