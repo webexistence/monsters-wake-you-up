@@ -17,7 +17,6 @@ loom {
 	mods {
 		"monsters-wake-you-up" {
 			sourceSet sourceSets.main
-			sourceSet sourceSets.client
 		}
 	}
 }
